@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compte-Rendu Summoners War - Format Paysage</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        swgt: {
+                            gold: '#fbbf24',
+                            dark: '#0b0f19',
+                            card: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080c14;
+            color: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        .monster-card-avatar {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            flex-shrink: 0;
+        }
+
+        .monster-card-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .report-canvas {
+            background: #0b0f19;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 24px 24px;
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 50;
+            color: #000000 !important;
+            background-color: #ffffff !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col">
+
+    <!-- En-tête -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <img src="https://i.imgur.com/3FQVVBq.png" alt="Logo" class="w-14 h-14 rounded-xl object-cover shadow-lg">
+                <div>
+                    <h1 class="font-bold text-base text-white leading-tight">SW Strategist</h1>
+                    <p class="text-[11px] text-slate-400 font-medium">Compte-Rendu Siège</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="resetAllData()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold rounded-xl border border-rose-500/30 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Effacer Tout</span>
+                </button>
+                <button onclick="exportAsPNG()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-image"></i>
+                    <span>Télécharger PNG</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6 flex-1 w-full space-y-6">
+        
+        <!-- SECTION 1 : ÉDITEUR DU COMBAT (HAUT) -->
+        <div id="panel-editor" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            
+            <!-- Noms des Guildes & Score -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="guild-name-1-input" class="text-[11px] text-amber-400 font-bold mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-shield"></i> Guilde Adverse 1
+                        </label>
+                        <input type="text" id="guild-name-1-input" placeholder="Nom Guilde 1..." oninput="onGuildInput()" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-black focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label for="guild-name-2-input" class="text-[11px] text-amber-400 font-bold mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-shield"></i> Guilde Adverse 2
+                        </label>
+                        <input type="text" id="guild-name-2-input" placeholder="Nom Guilde 2..." oninput="onGuildInput()" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-black focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div class="md:col-span-4 flex justify-end items-center">
+                    <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 text-xs font-mono w-full sm:w-auto text-center">
+                        <span class="text-slate-400 font-bold mr-2">Score Total:</span>
+                        <span id="counter-win" class="text-emerald-400 font-black">0</span>&thinsp;V - 
+                        <span id="counter-loss" class="text-rose-400 font-black">0</span>&thinsp;D
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pastilles de sélection des 10 combats -->
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <div id="pills-container" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Formulaire d'édition du combat sélectionné -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="font-bold text-white flex items-center text-sm">
+                        <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center mr-2 border border-amber-500/40" id="current-battle-num">1</span>
+                        Édition Combat <span id="current-battle-title" class="ml-1 text-slate-400">#1</span>
+                    </h2>
+
+                    <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+                        <button id="btn-res-win" onclick="setResult('win')" class="px-3 py-1 rounded-lg text-xs font-bold transition">🏆 Victoire</button>
+                        <button id="btn-res-loss" onclick="setResult('loss')" class="px-3 py-1 rounded-lg text-xs font-bold transition">❌ Défaite</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Attaque -->
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-amber-500/20">
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-2">⚔️ Attaque (3 Monstres)</span>
+                        <div id="offense-monsters-form" class="space-y-2"></div>
+                    </div>
+
+                    <!-- Défense -->
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-amber-500/20">
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-2">🛡️ Défense Adverse (3 Monstres)</span>
+                        <div id="defense-monsters-form" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <button onclick="prevBattle()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+                        <i class="fa-solid fa-chevron-left"></i> Précédent
+                    </button>
+                    <button onclick="nextBattle()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-xs font-black text-slate-950 transition">
+                        Suivant <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SECTION 2 : COMPTE-RENDU VISUEL (BAS - FORMAT PAYSAGE 2x5) -->
+        <div id="panel-preview" class="w-full overflow-x-auto pb-4">
+            <div id="capture-area" class="report-canvas border-l-4 border-amber-500 p-5 text-xs text-slate-200 font-sans rounded-2xl border border-slate-800 shadow-2xl min-w-[1050px]">
+                
+                <!-- En-tête de l'image -->
+                <div class="mb-4 pb-3 border-b border-slate-800/80 flex items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <img src="https://i.imgur.com/3FQVVBq.png" alt="Logo" class="w-10 h-10 rounded-lg object-cover">
+                        <div class="flex flex-col justify-center">
+                            <span class="font-extrabold text-white tracking-wide text-sm leading-tight block">SUMMONERS WAR</span>
+                            <span class="text-[10px] text-amber-400 font-bold tracking-widest uppercase leading-tight block">Compte-Rendu Siège</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="h-8 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-amber-400 text-xs font-black shadow flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-khanda text-amber-400 text-xs"></i>
+                            <span id="report-guild-1-name">Guilde 1</span>
+                            <span class="text-slate-500 font-bold text-[10px]">VS</span>
+                            <span id="report-guild-2-name">Guilde 2</span>
+                        </div>
+
+                        <div class="h-8 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs font-black shadow flex items-center justify-center" id="report-score-badge">
+                            0 W - 0 L
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grille en Flexbox pour un rendu parfait dans html2canvas -->
+                <div id="report-grid" class="flex flex-wrap gap-2.5 justify-between w-full">
+                    <!-- Les 10 cartes s'affichent ici -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-amber-500/50 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 transform translate-y-20 opacity-0 pointer-events-none z-50 transition-all duration-300">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Notification</span>
+    </div>
+
+    <script>
+        const LOCAL_MONSTER_DATABASE = [
+            { name: "Bulldozer", img: "https://i.imgur.com/gZnl2q9.png" },
+            { name: "Tracteur", img: "https://i.imgur.com/EqIYyjw.png" },
+            { name: "Grue", img: "https://i.imgur.com/bkuvhW5.png" },
+            { name: "Foreur", img: "https://i.imgur.com/C1PgrTw.png" },
+            { name: "Robot", img: "https://i.imgur.com/5i3QBPN.png" },
+            { name: "Fer", img: "https://i.imgur.com/kGOZAAr.png" },
+            { name: "Nickel", img: "https://i.imgur.com/u7jQ6u6.png" },
+            { name: "Copper", img: "https://i.imgur.com/pfa2OeV.png" },
+            { name: "Argent", img: "https://i.imgur.com/cxnV1Rm.png" },
+            { name: "Zinc", img: "https://i.imgur.com/6TJYmgZ.png" },
+            { name: "Sath", img: "https://i.imgur.com/NbFm4yZ.png" },
+            { name: "Hemos", img: "https://i.imgur.com/cKCVhYk.png" },
+            { name: "Hiva", img: "https://i.imgur.com/VWw0DXn.png" },
+            { name: "Prom", img: "https://i.imgur.com/8EeIEun.png" },
+            { name: "Thrain", img: "https://i.imgur.com/NuGGA8o.png" },
+            { name: "Rebecca", img: "https://i.imgur.com/WbDA0NC.png" },
+            { name: "Megan", img: "https://i.imgur.com/xG2jeH4.png" },
+            { name: "Silia", img: "https://i.imgur.com/W2gz8I2.png" },
+            { name: "Linda", img: "https://i.imgur.com/ETWVgN2.png" },
+            { name: "Gina", img: "https://i.imgur.com/LDSfZWs.png" },
+            { name: "Kai'en", img: "https://i.imgur.com/DvOHsTM.png" },
+            { name: "Allen", img: "https://i.imgur.com/vdg9tk3.png" },
+            { name: "Roid", img: "https://i.imgur.com/3MGOMl5.png" },
+            { name: "Darion", img: "https://i.imgur.com/flOmkQr.png" },
+            { name: "Jubelle", img: "https://i.imgur.com/HPHA1na.png" },
+            { name: "Mei", img: "https://i.imgur.com/Cri4gOT.png" },
+            { name: "Mina", img: "https://i.imgur.com/GAFkdZE.png" },
+            { name: "Naomi", img: "https://i.imgur.com/q95nxE4.png" },
+            { name: "Xiao Ling", img: "https://i.imgur.com/xw8iJJ2.png" },
+            { name: "Miho", img: "https://i.imgur.com/UDz82im.png" },
+            { name: "Garoche", img: "https://i.imgur.com/13sFpvW.png" },
+            { name: "Vigor", img: "https://i.imgur.com/0ALZkXc.png" },
+            { name: "Shakan", img: "https://i.imgur.com/VdikmZ9.png" },
+            { name: "Eshir", img: "https://i.imgur.com/AKtRhBH.png" },
+            { name: "Jultan", img: "https://i.imgur.com/Gnhn2aL.png" },
+            { name: "Lala", img: "https://i.imgur.com/yeg4rS4.png" },
+            { name: "Lulu", img: "https://i.imgur.com/p2GILeZ.png" },
+            { name: "Chichi", img: "https://i.imgur.com/CV8mvXi.png" },
+            { name: "Shushu", img: "https://i.imgur.com/vKiIk16.png" },
+            { name: "Shasha", img: "https://i.imgur.com/436vFyz.png" },
+            { name: "Colleen", img: "https://i.imgur.com/4Zqg7nj.png" },
+            { name: "Sisroo", img: "https://i.imgur.com/bMrzmWM.png" },
+            { name: "Seal", img: "https://i.imgur.com/cHv2tCF.png" },
+            { name: "Sia", img: "https://i.imgur.com/XhYIIVf.png" },
+            { name: "Seren", img: "https://i.imgur.com/yn9hKbE.png" },
+            { name: "Kahli", img: "https://i.imgur.com/8aiD0FJ.png" },
+            { name: "Ellena", img: "https://i.imgur.com/Nl6HM9V.png" },
+            { name: "Moria", img: "https://i.imgur.com/xDcFtwU.png" },
+            { name: "Shren", img: "https://i.imgur.com/v9qQJZl.png" },
+            { name: "Jumaline", img: "https://i.imgur.com/wq8vOZ7.png" },
+            { name: "Spectra", img: "https://i.imgur.com/d9Ef55K.png" },
+            { name: "Kahn", img: "https://i.imgur.com/OfmdXPY.png" },
+            { name: "Bernard", img: "https://i.imgur.com/SK167XM.png" },
+            { name: "Shamann", img: "https://i.imgur.com/pHsO1nt.png" },
+            { name: "Varus", img: "https://i.imgur.com/wuHXBlj.png" }
+        ];
+
+        let battlesData = Array.from({ length: 10 }, (_, i) => ({
+            id: i + 1,
+            result: 'win',
+            offense: ['', '', ''],
+            defense: ['', '', '']
+        }));
+
+        let currentBattleIndex = 0;
+        let guildName1 = '';
+        let guildName2 = '';
+
+        function init() {
+            renderPills();
+            renderEditorForm();
+            renderReportCards();
+            updateScoreBadge();
+            updateGuildDisplay();
+        }
+
+        function onGuildInput() {
+            guildName1 = document.getElementById('guild-name-1-input').value;
+            guildName2 = document.getElementById('guild-name-2-input').value;
+            updateGuildDisplay();
+        }
+
+        function updateGuildDisplay() {
+            const g1El = document.getElementById('report-guild-1-name');
+            const g2El = document.getElementById('report-guild-2-name');
+            if (g1El && g2El) {
+                g1El.innerText = guildName1.trim() || 'Guilde 1';
+                g2El.innerText = guildName2.trim() || 'Guilde 2';
+            }
+        }
+
+        function renderPills() {
+            const container = document.getElementById('pills-container');
+            container.innerHTML = '';
+            battlesData.forEach((b, idx) => {
+                const isSelected = idx === currentBattleIndex;
+                const btn = document.createElement('button');
+                btn.onclick = () => selectBattle(idx);
+                btn.className = `py-1 rounded-lg text-xs font-bold transition border ${
+                    isSelected 
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow scale-105 z-10' 
+                        : b.result === 'win' 
+                            ? 'bg-slate-800 text-emerald-400 border-emerald-500/30 hover:bg-slate-700' 
+                            : 'bg-slate-800 text-rose-400 border-rose-500/30 hover:bg-slate-700'
+                }`;
+                btn.innerText = `#${b.id}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectBattle(index) {
+            currentBattleIndex = index;
+            renderPills();
+            renderEditorForm();
+        }
+
+        function setResult(res) {
+            battlesData[currentBattleIndex].result = res;
+            renderPills();
+            renderEditorForm();
+            renderReportCards();
+            updateScoreBadge();
+        }
+
+        function renderEditorForm() {
+            const b = battlesData[currentBattleIndex];
+            document.getElementById('current-battle-num').innerText = b.id;
+            document.getElementById('current-battle-title').innerText = `#${b.id}`;
+
+            const winBtn = document.getElementById('btn-res-win');
+            const lossBtn = document.getElementById('btn-res-loss');
+
+            if (b.result === 'win') {
+                winBtn.className = "px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow";
+                lossBtn.className = "px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+            } else {
+                winBtn.className = "px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+                lossBtn.className = "px-3 py-1 rounded-lg text-xs font-bold bg-rose-600 text-white shadow";
+            }
+
+            renderTeamInputs('offense-monsters-form', 'offense', b.offense);
+            renderTeamInputs('defense-monsters-form', 'defense', b.defense);
+        }
+
+        function renderTeamInputs(containerId, teamType, monstersArr) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            monstersArr.forEach((mName, slotIdx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative flex items-center gap-2';
+
+                const mObj = LOCAL_MONSTER_DATABASE.find(m => m.name.toLowerCase() === mName.toLowerCase());
+                const imgUrl = mObj ? mObj.img : 'https://i.imgur.com/zobLe0B.png';
+
+                wrapper.innerHTML = `
+                    <div class="monster-card-avatar">
+                        <img src="${imgUrl}" alt="${mName}">
+                    </div>
+                    <div class="relative flex-1">
+                        <input type="text" 
+                            value="${mName}" 
+                            placeholder="Monstre ${slotIdx + 1}"
+                            class="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs text-black font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <div class="autocomplete-dropdown hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-xl z-50"></div>
+                    </div>
+                `;
+
+                const inputEl = wrapper.querySelector('input');
+                const dropdownEl = wrapper.querySelector('.autocomplete-dropdown');
+
+                inputEl.oninput = (e) => onMonsterInput(e.target.value, teamType, slotIdx, dropdownEl);
+
+                container.appendChild(wrapper);
+            });
+        }
+
+        function onMonsterInput(val, teamType, slotIdx, dropdown) {
+            battlesData[currentBattleIndex][teamType][slotIdx] = val;
+
+            if (!val.trim()) {
+                dropdown.classList.add('hidden');
+                renderReportCards();
+                return;
+            }
+
+            const matches = LOCAL_MONSTER_DATABASE.filter(m => m.name.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+
+            if (matches.length === 0) {
+                dropdown.classList.add('hidden');
+            } else {
+                dropdown.innerHTML = '';
+                matches.forEach(m => {
+                    const item = document.createElement('div');
+                    item.className = 'px-3 py-1.5 hover:bg-slate-100 cursor-pointer flex items-center gap-2 text-xs font-bold text-black border-b border-slate-100 last:border-0';
+                    item.innerHTML = `<img src="${m.img}" class="w-5 h-5 rounded object-cover"><span>${m.name}</span>`;
+                    item.onclick = () => {
+                        battlesData[currentBattleIndex][teamType][slotIdx] = m.name;
+                        renderEditorForm();
+                        renderReportCards();
+                    };
+                    dropdown.appendChild(item);
+                });
+                dropdown.classList.remove('hidden');
+            }
+
+            renderReportCards();
+        }
+
+        function renderReportCards() {
+            const grid = document.getElementById('report-grid');
+            grid.innerHTML = '';
+
+            battlesData.forEach((b) => {
+                const isWin = b.result === 'win';
+                const card = document.createElement('div');
+                card.className = `w-[calc(20%-0.5rem)] p-2.5 rounded-xl border ${isWin ? 'bg-slate-900/90 border-emerald-500/40' : 'bg-slate-900/90 border-rose-500/40'} flex flex-col gap-2 box-border`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 h-5 rounded text-[10px] font-black flex items-center justify-center ${isWin ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">#${b.id}</span>
+                            <span class="font-extrabold text-[11px] ${isWin ? 'text-emerald-400' : 'text-rose-400'} tracking-wide">${isWin ? 'VICTOIRE' : 'DÉFAITE'}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80 space-y-2">
+                        <div class="text-[9px] font-black text-amber-400 uppercase tracking-wider">ATQ</div>
+                        <div class="flex items-start justify-center gap-1.5">
+                            ${renderMonsterIcons(b.offense)}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80 space-y-2">
+                        <div class="text-[9px] font-black text-amber-400 uppercase tracking-wider">DEF</div>
+                        <div class="flex items-start justify-center gap-1.5">
+                            ${renderMonsterIcons(b.defense)}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderMonsterIcons(arr) {
+            return arr.map(mName => {
+                const trimmedName = (mName || '').trim();
+                const mObj = LOCAL_MONSTER_DATABASE.find(m => m.name.toLowerCase() === trimmedName.toLowerCase());
+                const imgUrl = mObj ? mObj.img : '';
+                
+                if (!trimmedName) {
+                    return `
+                        <div class="flex flex-col items-center justify-start text-center w-14 shrink-0">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700/50 flex items-center justify-center text-slate-600 text-[10px]">?</div>
+                            <span class="text-[9px] font-bold text-slate-600 w-full leading-tight pt-1 block">-</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="flex flex-col items-center justify-start text-center w-14 shrink-0" title="${trimmedName}">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden relative shadow-md shrink-0">
+                            <img src="${imgUrl || 'https://via.placeholder.com/32?text=' + trimmedName.charAt(0)}" class="w-full h-full object-cover" alt="${trimmedName}">
+                        </div>
+                        <span class="text-[9px] font-bold text-slate-200 w-full leading-tight pt-1 block break-words whitespace-normal text-center">
+                            ${trimmedName}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateScoreBadge() {
+            const wins = battlesData.filter(b => b.result === 'win').length;
+            const losses = battlesData.filter(b => b.result === 'loss').length;
+
+            document.getElementById('counter-win').innerText = wins;
+            document.getElementById('counter-loss').innerText = losses;
+            document.getElementById('report-score-badge').innerText = `${wins} W - ${losses} L`;
+        }
+
+        function prevBattle() {
+            if (currentBattleIndex > 0) selectBattle(currentBattleIndex - 1);
+        }
+
+        function nextBattle() {
+            if (currentBattleIndex < 9) selectBattle(currentBattleIndex + 1);
+        }
+
+        function resetAllData() {
+            battlesData = Array.from({ length: 10 }, (_, i) => ({
+                id: i + 1,
+                result: 'win',
+                offense: ['', '', ''],
+                defense: ['', '', '']
+            }));
+            guildName1 = '';
+            guildName2 = '';
+            document.getElementById('guild-name-1-input').value = '';
+            document.getElementById('guild-name-2-input').value = '';
+            currentBattleIndex = 0;
+            init();
+            showToast('Toutes les données ont été réinitialisées');
+        }
+
+        async function exportAsPNG() {
+            const element = document.getElementById('capture-area');
+            
+            // Attente du chargement complet des polices
+            await document.fonts.ready;
+
+            html2canvas(element, {
+                useCORS: true,
+                allowTaint: false,
+                scale: 2,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1200,
+                onclone: (clonedDoc) => {
+                    const clonedElement = clonedDoc.getElementById('capture-area');
+                    if (clonedElement) {
+                        clonedElement.style.transform = 'none';
+                    }
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'compte-rendu-sw.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
